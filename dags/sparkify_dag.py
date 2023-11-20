@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 from airflow import DAG
 from airflow.operators.empty import EmptyOperator
-from airflow.providers.postgres.operators.postgres import PostgresOperator
+from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
 from operators import (StageToRedshiftOperator, LoadFactOperator, LoadDimensionOperator, DataQualityOperator)
 from helpers import SqlQueries
 
@@ -22,14 +22,15 @@ dag = DAG('sparkify_dag',
           default_args=default_args,
           description='Load and transform data in Redshift with Airflow',
           schedule_interval='@hourly',
+          max_active_runs=1
           )
 
 start_operator = EmptyOperator(task_id='Begin_execution',  dag=dag)
 
-create_tables = PostgresOperator(
+create_tables = SQLExecuteQueryOperator(
     task_id='Create_tables',
     dag=dag,
-    postgres_conn_id='redshift',
+    conn_id='redshift',
     sql='create_tables.sql',
 )
 
